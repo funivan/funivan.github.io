@@ -2,134 +2,194 @@
 <html>
   <head>
     <title>Child stat</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js"></script>
   </head>
+  <style type="text/css">
+    body {
+      font-size: 1.8em;
+    }
+    #container {
+      width: 80%;
+      margin: 0 20%;
+    }
+    #logout {
+      text-align: right;
+    }
+    .row-name {
+      width: 20%;
+      display: inline-block;
+    }
+    .row-date {
+      display: inline-block;
+      width: 70%;
+    }
+    .row-action{
+      display: inline-block;
+      width: 10%;
+    }
+    .button { 
+      margin: 0 1%;
+    }
+  </style>
   <body>
-    <h1>Click the stat</h1>
 
     <div id="container">
       <button id="login" style="display:none">Log in with Dropbox</button>
-      <button id="box" style="display:none"></button>
-    </div>
-    <a id="reset" href="#">&pi;</a>
-    <a id="logout" href="#" style="display:none">Log out</a>
+      <a id="logout" href="#" style="display:none">Log out</a>
 
-    <div class="js-date-results">
 
-    </div>
-    <div class="buttons" style="display:none;">
-      <a href="#" class="js-start-sleep">start sleep</a>
-      <a href="#" class="js-beep">beep</a>
-      <a href="#" class="js-eat">eat</a>
+      <div class="js-date-results" style="width: 70%">
+
+      </div>
+      <div class="buttons" style="display:none;">
+        <a href="#" class="button" data-type="start-sleep">start sleep</a>
+        <a href="#" class="button" data-type="start-sleep">stop sleep</a>
+        <a href="#" class="button" data-type="beep">beep</a>
+        <a href="#" class="button" data-type="eat">eat</a>
+        <a href="#" class="button" data-type="water">water</a>
+      </div>
     </div>
 
     <script>
-      if (window.location.href.indexOf('http://') === 0 && window.location.host.indexOf('127.0.0.1') !== 0) {
-        window.location = window.location.href.replace('http://', 'https://');
-      }
-
-      // Be sure to use your own app key so you can set up your own redirect URI.
-      var APP_KEY = 'q0pa3lmetgckf2i';
-      var client = new Dropbox.Client({key: APP_KEY});
-      // Use a pop-up for auth.
-      client.authDriver(new Dropbox.AuthDriver.Popup({receiverUrl: window.location.href + 'oauth_receiver.html'}));
+      $(document).ready(function () {
 
 
-      // First check if we're already authenticated.
-      client.authenticate({interactive: false});
+        if (window.location.href.indexOf('http://') === 0 && window.location.host.indexOf('127.0.0.1') !== 0) {
+          window.location = window.location.href.replace('http://', 'https://');
+        }
 
-      if (client.isAuthenticated()) {
-        // If we're authenticated, update the UI to reflect the logged in status.
-        loggedIn();
-      } else {
-        // Otherwise show the login button.
-        $('#login').show();
-      }
+        // Be sure to use your own app key so you can set up your own redirect URI.
+        var APP_KEY = 'q0pa3lmetgckf2i';
 
-      $('#login').click(function () {
-        client.authenticate(function (err) {
-          if (err) {
-            alert('Error: ' + err);
-            return;
-          }
+        var client = new Dropbox.Client({key: APP_KEY});
+
+        // Use a pop-up for auth.
+        client.authDriver(new Dropbox.AuthDriver.Popup({receiverUrl: window.location.href + 'oauth_receiver.html'}));
+
+
+        // First check if we're already authenticated.
+        client.authenticate({interactive: false});
+
+        if (client.isAuthenticated()) {
+          // If we're authenticated, update the UI to reflect the logged in status.
           loggedIn();
-        });
-      });
+        } else {
+          // Otherwise show the login button.
+          $('#login').show();
+        }
 
-      function loggedIn() {
-        $('#login').hide();
-        $('.buttons').show();
-        var dataStoreManager = new Dropbox.Datastore.dataStoreManager(client);
-
-        dataStoreManager.openDefaultDatastore(function (err, datastore) {
+        $('#login').click(function () {
+          client.authenticate(function (err) {
             if (err) {
               alert('Error: ' + err);
               return;
             }
+            loggedIn();
+          });
+        });
+        
+        function loggedIn() {
+          $('#login').hide();
+          $('.buttons').show();
+          var dataStoreManager = client.getDatastoreManager();
 
-            // Make sure we use the "max" resolution rule to resolve conflicts about which level we're on.
-            var table = datastore.getTable('child-stat-test');
-//          table.setResolutionRule('level', 'max');
-
-            $('.js-start-sleep').click(function () {
-              table.insert({
-                type: 'start-sleep',
-                time: (new Date()).toLocaleTimeString(),
-              });
-            })
-
-            datastore.recordsChanged.addListener(updateResultTable);
-
-            var updateResultTable = function () {
-              var records = table.query();
-              for (var i = 0; i &lt; records.length; i++) {
-                var record = records[i];
-                console.log(record);
+          dataStoreManager.openDefaultDatastore(function (err, datastore) {
+              if (err) {
+                alert('Error: ' + err);
+                return;
               }
+
+              var add = function (type) {
+                table.insert({
+                  type: type,
+                  time: (new Date()).toLocaleString(),
+                });
+              }
+
+
+              // Make sure we use the "max" resolution rule to resolve conflicts about which level we're on.
+              var table = datastore.getTable('child-stat-test');
+              // table.setResolutionRule('level', 'max');
+
+              $('body').on('click', '.js-delete-row', function (e) {
+
+                e.preventDefault();
+                var $el = $(this);
+                var id = $el.data('id')
+                console.log(id);
+                var record = table.get(id)
+
+                record.deleteRecord();
+                
+                $el.parent().parent().remove();
+
+                return false;
+              })
+              
+              $('.button').click(function () {
+                var type = $(this).data('type')
+                add(type);
+                return false; 
+              })
+
+
+
+              var updateResultTable = function () {
+                $('.js-date-results').html('')
+                
+                var records = table.query();
+                var limit = 20;
+                var max = records.length - 1;
+
+                for (var i = max; i >= 0; i--) {
+
+                  if (limit == 0) {
+                    break;
+                  }
+
+                  limit--;
+
+                  var record = records[i];
+                  var fields = record.getFields();
+
+                  var date = new Date(fields.time);
+                  $('.js-date-results').append('<div class="row"> ' +
+                    '<div class="row-name">'
+                    + fields.type
+                    + '</div>'
+                    + '<div class="row-date">'
+                    + date.getFullYear() + '-'+date.getMonth() +'-'+date.getDay() + ' '+date.getHours() +':'+date.getMinutes() 
+                    + '</div>'
+                      
+                    + '<div class="row-action">'
+                    + '<a class="js-delete-row" href="#" data-id="' + record.getId() + '" >del</a>'
+                    + '</div>'
+                      
+                      
+                    + '</div>');
+
+                }
+              }
+
+              datastore.recordsChanged.addListener(updateResultTable);
+
+              updateResultTable();
+
+
+              $('#logout').show().click(function (e) {
+                e.preventDefault();
+                client.signOut();
+                $('#login').show();
+                $('#box, #instructions').hide();
+                $('#container').css('padding', 0);
+                $('h1').text('Click the Box');
+              });
             }
-
-
-////          function getRecord() {
-////            // Use getOrInsert to provide a default of level 0.
-////            return table.getOrInsert('current_level', {level: 0});
-////          }
-//
-//          function updateLevel() {
-//            setLevel(getRecord().get('level'));
-//          }
-
-//          updateLevel();
-
-//          // Any time there's a change, update the current level.
-
-//
-//          $('#box').click(function (e) {
-//            e.preventDefault();
-//
-//            // Increment the level.
-//            var record = getRecord();
-//            record.set('level', record.get('level') + 1);
-//          });
-//
-//          $('#reset').click(function (e) {
-//            e.preventDefault();
-//            // Go back to level 0.
-//            getRecord().set('level', 0);
-//          });
-
-            $('#logout').show().click(function (e) {
-              e.preventDefault();
-              client.signOut();
-              $('#login').show();
-              $('#box, #instructions').hide();
-              $('#container').css('padding', 0);
-              $('h1').text('Click the Box');
-            });
-          }
-        )
-        ;
-      }
+          )
+          ;
+        }
+      })
     </script>
   </body>
 </html>
