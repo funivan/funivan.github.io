@@ -49,7 +49,7 @@ $(document).ready(function () {
         var add = function (type) {
           table.insert({
             type: type,
-            time: (new Date()).toLocaleString(),
+            time: (new Date()).toString(),
           });
         }
 
