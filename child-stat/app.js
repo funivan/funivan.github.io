@@ -105,7 +105,7 @@ $(document).ready(function () {
               + fields.type
               + '</div>'
               + '<div class="row-date">'
-              + date.getFullYear() + '-'+date.getMonth() +'-'+date.getDate() + ' '+date.getHours() +':'+date.getMinutes()
+              + date.toLocaleFormat("%Y-%m-%d %H:%M")
               + '</div>'
 
               + '<div class="row-action">'
