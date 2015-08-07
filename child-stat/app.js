@@ -1,6 +1,23 @@
 $(document).ready(function () {
 
 
+  var timeDiff = function (timeStart, timeEnd) {
+    var hourDiff = timeEnd - timeStart; //in ms
+
+    var minDiff = hourDiff / 60 / 1000; //in minutes
+    var hDiff = hourDiff / 3600 / 1000; //in hours
+
+    var hours = Math.floor(hDiff);
+    var minutes =  Math.floor(minDiff - 60 * hours);
+
+
+    if (hours == 0) {
+      return minutes + 'm';
+    }
+
+    return hours + ':' + minutes;
+  }
+
   if (window.location.href.indexOf('http://') === 0 && window.location.host.indexOf('127.0.0.1') !== 0) {
     window.location = window.location.href.replace('http://', 'https://');
   }
@@ -88,6 +105,12 @@ $(document).ready(function () {
 
 
         var updateResultTable = function () {
+          var showDates = {
+            water: 0,
+            eat: 0,
+            beep: 0
+          }
+
           $('.data-rows').html('')
 
           var records = table.query();
@@ -108,14 +131,23 @@ $(document).ready(function () {
 
             var date = new Date(fields.time);
 
+            var type = fields.type;
+
+
+            var dateInfo = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes();
+
+            if (showDates.hasOwnProperty(type) && showDates[type] == 0) {
+              dateInfo = dateInfo + ' ('+timeDiff(date,  new Date())+')';
+              showDates[type] = 1;
+            }
 
             rows = rows
               + '<tr>'
               + '<td>'
-              + fields.type
+              + type
               + '</td>'
               + '<td>'
-              + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes()
+              + dateInfo
               + '</td>'
 
               + '<td>'
