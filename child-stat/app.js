@@ -25,7 +25,11 @@ $(document).ready(function () {
     $('#login').show();
   }
 
-  $('#login').click(function () {
+  function showLoader() {
+    $('.data-rows').html('<div class="progress"><div class="indeterminate"></div></div>');
+  }
+
+  $('#login-link').click(function () {
     client.authenticate(function (err) {
       if (err) {
         alert('Error: ' + err);
@@ -37,7 +41,10 @@ $(document).ready(function () {
 
   function loggedIn() {
     $('#login').hide();
+    showLoader();
     $('.buttons').show();
+    $('.js-date-results').show();
+
     var dataStoreManager = client.getDatastoreManager();
 
     dataStoreManager.openDefaultDatastore(function (err, datastore) {
@@ -80,14 +87,14 @@ $(document).ready(function () {
         })
 
 
-
         var updateResultTable = function () {
-          $('.js-date-results').html('')
+          $('.data-rows').html('')
 
           var records = table.query();
           var limit = 20;
           var max = records.length - 1;
 
+          var rows = '';
           for (var i = max; i >= 0; i--) {
 
             if (limit == 0) {
@@ -100,22 +107,39 @@ $(document).ready(function () {
             var fields = record.getFields();
 
             var date = new Date(fields.time);
-            $('.js-date-results').append('<div class="row"> ' +
-              '<div class="row-name">'
+
+
+            rows = rows
+              + '<tr>'
+              + '<td>'
               + fields.type
-              + '</div>'
-              + '<div class="row-date">'
-              + date.toLocaleFormat("%Y-%m-%d %H:%M")
-              + '</div>'
+              + '</td>'
+              + '<td>'
+              + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes()
+              + '</td>'
 
-              + '<div class="row-action">'
+              + '<td>'
               + '<a class="js-delete-row" href="#" data-id="' + record.getId() + '" >del</a>'
-              + '</div>'
+              + '</td>'
 
 
-              + '</div>');
+              + '</tr>';
 
           }
+          $('.data-rows').append('<table>' +
+            '<thead>' +
+            '<tr>' +
+            '<th data-field="id">Name</th>' +
+            '<th data-field="date">Date</th>' +
+            '<th data-field="actions">Action</th>' +
+            '</tr>'
+            + '</thead>'
+            + '<tbody>'
+
+
+            + rows
+            + '</tbody>'
+            + '</table>');
         }
 
         datastore.recordsChanged.addListener(updateResultTable);
@@ -124,12 +148,14 @@ $(document).ready(function () {
 
 
         $('#logout').show().click(function (e) {
-          e.preventDefault();
           client.signOut();
+
           $('#login').show();
-          $('#box, #instructions').hide();
-          $('#container').css('padding', 0);
-          $('h1').text('Click the Box');
+          $('.js-date-results').hide();
+          $('#logout').hide();
+          showLoader();
+
+          e.preventDefault();
         });
       }
     )
