@@ -126,7 +126,7 @@ $(document).ready(function () {
               + '</tr>';
 
           }
-          $('.data-rows').append('<table>' +
+          $('.data-rows').append('<table class="striped" >' +
             '<thead>' +
             '<tr>' +
             '<th data-field="id">Name</th>' +
